@@ -1,14 +1,17 @@
 import React from "react";
-import { StyleSheet, TextInput } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
-export default function Input({ placeholder, password = false, onChangeText }) {
+export default function Input({ placeholder, password = false, onChangeText, label = '' }) {
   return (
-    <TextInput
-      placeholder={placeholder}
-      style={styles.inputText}
-      secureTextEntry={password}
-      onChangeText={(value) => onChangeText(value)}
-    />
+    <View style={{ marginTop: 15, width: "100%" }}>
+      {label ? <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{label}</Text> : null}
+      <TextInput
+        placeholder={placeholder}
+        style={styles.inputText}
+        secureTextEntry={password}
+        onChangeText={(value) => onChangeText(value)}
+      />
+    </View>
   );
 }
 
@@ -19,6 +22,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 20,
     width: "100%",
-    marginTop: 15,
+    marginTop: 2,
   },
 });
