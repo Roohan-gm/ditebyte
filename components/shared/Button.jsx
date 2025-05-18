@@ -1,34 +1,42 @@
-import { Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Text, TouchableOpacity, StyleSheet, View, ActivityIndicator } from "react-native";
 import React from "react";
-import { AntDesign } from '@expo/vector-icons';
 
-export default function Button({ title, onPress }) {
+export default function Button({ title, onPress, loading = false, icon = null }) {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={styles.button}
-    >
-      <Text style={styles.text}>{title}</Text>
-      <AntDesign name="arrowright" size={30} color="#fff" />
+    <TouchableOpacity onPress={onPress} style={styles.button} disabled={loading}>
+      {loading ? (
+        <ActivityIndicator size="small" color="#fff" />
+      ) : (
+        <View style={styles.content}>
+          <Text style={styles.text}>{title}</Text>
+          {icon && <View style={styles.icon}>{icon}</View>}
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
+    alignItems: "center",
+    height: 52,
+    width: "100%",
+    justifyContent: "center",
+    backgroundColor: "#28efa8",
+    padding: 6,
+    borderRadius: 8,
+  },
+  content: {
     flexDirection: "row",
     alignItems: "center",
-    height: 62,
-    width:"100%",
-    justifyContent: "space-around",
-    backgroundColor: "#28efa8",
-    padding: 8,
-    borderRadius: 8,
-    marginTop:15
+    justifyContent: "center",
   },
   text: {
     color: "#fff",
     fontSize: 18,
-    fontWeight:"bold",
-  }
+    fontWeight: "bold",
+  },
+  icon: {
+    marginLeft: 8, // Adjust spacing between icon and text
+  },
 });

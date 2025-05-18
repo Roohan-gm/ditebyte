@@ -1,7 +1,7 @@
 import { View, Text, Image, Alert, Keyboard } from "react-native";
 import React, { useContext, useState } from "react";
 import Input from "../../components/shared/Input";
-import ButtonPrimary from "../../components/shared/ButtonPrimary";
+import Button from "../../components/shared/Button";
 import { Link, useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useConvex } from "convex/react";
@@ -16,35 +16,50 @@ export default function SignIn() {
   const { user, setUser } = useContext(UserContext);
   const router = useRouter();
 
-  const onSignIn = () => {
+  const [loading, setLoading] = useState(false);
+
+  const onSignIn = async () => {
     Keyboard.dismiss();
+
     if (!email || !password) {
-      Alert.alert("Missing Fields", "Fill all Fields");
+      Alert.alert("⚠️ Missing Fields", "Please fill all fields.");
       return;
     }
 
-    signInWithEmailAndPassword(auth, email, password)
-      .then(async (userCredential) => {
-        const user = userCredential.user;
-        const userData = await convex.query(api.Users.GetUser, {
-          email: email,
-        });
+    try {
+      setLoading(true);
 
-        console.log(userData);
-        setUser(userData);
-        router.push("/(tabs)/Home");
-        // Signed in
+      // Sign in user
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.log(errorMessage);
-        Alert.alert(
-          "Incorrect Email & Password",
-          "Please enter valid email and password"
-        );
+
+      const userData = await convex.query(api.Users.GetUser, {
+        email: email,
       });
+
+      // console.log("✅ User data:", userData);
+
+      // Check if user data is valid
+      if (!userData) {
+        console.error("❌ User not found or query failed.");
+        Alert.alert("User not found", "No data found for this email.");
+        setLoading(false);
+        return;
+      }
+
+      // Set user data
+      setUser(userData);
+      setLoading(false);
+
+      // Redirect user to home screen
+      router.push("/(tabs)/Home");
+
+    } catch (error) {
+      // console.error("❌ Authentication Error:", error.code, error.message);
+      Alert.alert("Incorrect Email & Password", "Please enter valid credentials.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,13 +70,19 @@ export default function SignIn() {
       />
       <Text className="text-2xl font-bold ">Welcome back!</Text>
       <View className="mt-3 w-[100%]">
-        <Input placeholder={"Email"} onChangeText={setEmail} />
+        <Input
+          placeholder={"Email"}
+          onChangeText={(text) => setEmail(text.toLowerCase().trim())}
+          keyboardType={'email-address'}
+        />
         <Input
           placeholder={"Password"}
           password={true}
-          onChangeText={setPassword}
+          onChangeText={(text) => setPassword(text.trim())}
         />
-        <ButtonPrimary title={"Sign In"} onPress={() => onSignIn()} />
+        <View className="mt-3">
+          <Button title={"Sign In"} onPress={() => onSignIn()} loading={loading} />
+        </View>
         <View className="flex flex-row justify-between mt-6">
           <Text className="text-center text-sm ">Don't have an account?</Text>
           <Link href="auth/SignUp">

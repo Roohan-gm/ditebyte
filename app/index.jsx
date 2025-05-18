@@ -7,6 +7,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { UserContext } from "../context/UserContext";
 import { useConvex } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { RightArrow } from "../assets/images/icons/svgIcons";
 
 export default function Index() {
   const router = useRouter();
@@ -38,10 +39,11 @@ export default function Index() {
           Welcome to DietBite! - your partner in achieving a healthier, happier
           you! Let's fuel your journey today!
         </Text>
-        <View className="absolute bottom-16">
+        <View className="absolute bottom-16 w-full px-5">
           <Button
             title="Get Started"
             onPress={() => router.push('/auth/SignIn')}
+            icon={<RightArrow />}
           />
         </View>
       </View>

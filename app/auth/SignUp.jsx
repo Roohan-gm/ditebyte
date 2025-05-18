@@ -1,7 +1,7 @@
 import { View, Text, Image, Alert, Keyboard } from "react-native";
 import React, { useContext, useState } from "react";
 import Input from "../../components/shared/Input";
-import ButtonPrimary from "../../components/shared/ButtonPrimary";
+import Button from "../../components/shared/Button";
 import { Link, useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/FirebaseConfig";
@@ -16,6 +16,7 @@ export default function SignUp() {
   const createNewUser = useMutation(api.Users.CreateNewUser);
   const { user, setUser } = useContext(UserContext);
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const onSignUp = () => {
     Keyboard.dismiss();
@@ -23,24 +24,27 @@ export default function SignUp() {
       Alert.alert("Missing Fields", "Fill all Fields");
       return;
     }
+    setLoading(true);
     createUserWithEmailAndPassword(auth, email, password)
       .then(async (userCredential) => {
         // Signed up
-        const user = userCredential.user;
-        console.log(user);
-        if (user) {
+        const users = userCredential.user;
+        if (users) {
           const result = await createNewUser({
             name: name,
             email: email,
           });
-          console.log(result);
           setUser(result);
         }
+        setLoading(false);
+        
         router.push("/auth/SignIn");
       })
       .catch((error) => {
+        setLoading(false);
         const errorCode = error.code;
         const errorMessage = error.message;
+        console.log(errorCode);
         console.log(errorMessage);
         // Handle error appropriately
       });
@@ -54,13 +58,15 @@ export default function SignUp() {
       <Text className="text-2xl font-bold ">Create New Account</Text>
       <View className="mt-3 w-[100%]">
         <Input placeholder={"Full Name"} onChangeText={setName} />
-        <Input placeholder={"Email"} onChangeText={setEmail} />
+        <Input placeholder={"Email"} onChangeText={(text)=>setEmail(text.toLowerCase().trim())} keyboardType={'email-address'} />
         <Input
           placeholder={"Password"}
           password={true}
-          onChangeText={setPassword}
+          onChangeText={(text) => setPassword(text.trim())}
         />
-        <ButtonPrimary title={"Sign Up"} onPress={() => onSignUp()} />
+        <View className="mt-3">
+          <Button title={"Sign Up"} onPress={() => onSignUp()} loading={loading}/>
+        </View>
         <View className="flex flex-row justify-between mt-6">
           <Text className="text-center text-sm ">Already have an account?</Text>
           <Link href="auth/SignIn">
