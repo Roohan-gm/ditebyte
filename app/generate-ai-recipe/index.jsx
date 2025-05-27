@@ -1,11 +1,11 @@
-import { View, Text, Platform } from 'react-native';
+import { View, Text, Platform, Keyboard } from 'react-native';
 import { useState } from 'react';
 import { TextInput } from 'react-native';
 import Button from '../../components/shared/Button';
 import { GenerateRecipeOptionsAi } from '../../services/AiModel';
 import Prompt from '../../shared/Prompt';
-import RecipeOptionList from '../../components/shared/RecipeOptionList'; 
-import {AiSearchIcon} from '../../assets/images/icons/svgIcons';
+import RecipeOptionList from '../../components/shared/RecipeOptionList';
+import { AiSearchIcon } from '../../assets/images/icons/svgIcons';
 
 export default function GenerateAiRecipe() {
   const [input, setInput] = useState('');
@@ -14,7 +14,9 @@ export default function GenerateAiRecipe() {
 
   const GenerateRecipeOptions = async () => {
     try {
-    //   console.log("Function GenerateRecipeOptions started");
+      //   console.log("Function GenerateRecipeOptions started");
+
+      Keyboard.dismiss();
 
       if (!input.trim()) {
         console.warn("Input is empty or contains only spaces");
@@ -23,28 +25,29 @@ export default function GenerateAiRecipe() {
       }
 
       setLoading(true);
-    //   console.log("Loading state set to true");
+      //   console.log("Loading state set to true");
 
       const prompt = input + Prompt.GENERATE_RECIPE_OPTIONS_PROMPT;
-    //   console.log("Generated prompt:", prompt);
+      //   console.log("Generated prompt:", prompt);
 
       const result = await GenerateRecipeOptionsAi(prompt);
-    //   console.log("AI model result:", result);
+      //   console.log("AI model result:", result);
 
       if (!result) throw new Error("No result from AI model");
 
-      const cleanResult = result.replace(/```json/g, '').replace(/```/g, '').trim();
-    //   console.log("Cleaned result:", cleanResult);
+      // Clean the result to extract valid JSON
+      let cleanResult = result.replace(/[^{]*({.*})[^}]*$/s, '$1').trim(); // Extract JSON part
+      console.log("Cleaned result:", cleanResult);
 
       const ParsedData = JSON.parse(cleanResult);
-    //   console.log("Parsed JSON data:", ParsedData);
+      console.log("Parsed JSON data:", ParsedData);
 
       const optionsArray = Object.values(ParsedData);
       if (!Array.isArray(optionsArray)) {
         throw new Error("Parsed data is not an array");
       }
 
-    //   console.log("Recipe options array:", optionsArray);
+      //   console.log("Recipe options array:", optionsArray);
       setRecipeOptions(optionsArray);
     } catch (error) {
       console.error("Error generating recipe options:", error);

@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native'
+import { FlatList, Platform, View } from 'react-native'
 import React, { useContext, useEffect } from 'react'
 import { UserContext } from './../../context/UserContext';
 import { useRouter } from 'expo-router';
@@ -15,14 +15,26 @@ export default function Home() {
     if (!user?.weight) {
       router.replace("/preference");
     }
+    if (!user?._id) {
+      router.reload()
+    }
   }, [user]);
 
   return (
-    <View className="p-4">
-      <HomeHeader />
-      <TodayProgress />
-      <GenerateRecipeCard/>
-      <TodaysMealPlan/>
-    </View>
+    <FlatList
+      data={[]}
+      renderItem={() => { }}
+      ListHeaderComponent={
+        <View style={{
+          paddingTop: Platform.OS === 'ios' ? 40 : 20,
+          padding: 20,
+          marginBottom:70
+        }}>
+          <HomeHeader />
+          <TodayProgress />
+          <GenerateRecipeCard />
+          <TodaysMealPlan />
+        </View>}
+    />
   )
 }

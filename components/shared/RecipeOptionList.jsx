@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import React, { useContext, useState } from 'react';
 import { UserContext } from './../../context/UserContext';
 import LoadingDialog from './LoadingDialog';
@@ -17,51 +17,63 @@ export default function RecipeOptionList({ options }) {
   const onRecipeOptionPress = async ({ option }) => {
     try {
       setLoading(true);
-      const prompt = "RecipeName:" + option?.name + ", Description:" + option?.description + Prompt.GENERATE_SELECTED_RECIPE;
-      // console.log("Prompt: ", prompt);
+      const prompt = `RecipeName:${option?.name}, Description:${option?.description} ${Prompt.GENERATE_SELECTED_RECIPE}`;
+
       const result = await GenerateAIRecipeModel(prompt);
-      console.log("Raw API Response:", result); // Check the raw response
 
-      // Clean the response to extract valid JSON
-      let cleanedResult = result
-        .replace(/```json/g, '')  // Remove JSON code block markers
-        .replace(/```/g, '')     // Remove extra code block markers
-        .trim();
+      // Add null check for result
+      if (!result || result.trim() === "") {
+        Alert.alert("Error", "Received an empty or invalid response from AI");
+        setLoading(false);
+        return;
+      }
 
-      const jsonMatch = cleanedResult.match(/\{.*\}/s);
-      const pureJson = jsonMatch ? jsonMatch[0] : '';
-      const parsedData = JSON.parse(pureJson);
-      console.log('Parsed Data: ', parsedData);
+      // Safer JSON extraction with fallback
+      let cleanedResult;
+      try {
+        cleanedResult = result.replace(/[^{]*({.*})[^}]*$/s, '$1').trim() || result;
+      } catch (e) {
+        console.warn("JSON extraction failed, using raw response");
+      }
+      const parsedJson = JSON.parse(cleanedResult);
 
-      // Generate Recipe image
-      // const aiImageResp = await GenerateImage(parsedData?.imagePrompt);
-      // console.log('AI Image Response:', aiImageResp);
 
-      console.log("User Data: ", user);
-      // save to DB
+      // Validate cleaned result
+      if (!parsedJson) {
+        console.error("Invalid response format from AI model");
+        Alert.alert("Error", "Invalid response format from AI model");
+        setLoading(false);
+        return;
+      }
+
+      // Rest of your saving logic...
       const saveRecipeResult = await CreateRecipe({
-        jsonData: parsedData,
-        // imageUrl: aiImageResp,
+        jsonData: parsedJson,
         recipeName: option?.name,
         uid: user?._id,
-      })
+      });
+
+      if (!saveRecipeResult) {
+        Alert.alert("Database Error", "Recipe ID missing, save operation failed");
+        setLoading(false);
+        return;
+      }
+
       console.log('Recipe saved to DB:', saveRecipeResult);
 
-      //Redirect to recipe details page
-
-      setLoading(false);
       router.push({
         pathname: '/recipe-detail',
         params: { recipeId: saveRecipeResult },
       });
+
     } catch (error) {
-      console.error("Error generating recipe options:", error);
-      setLoading(false);
+      console.error("Error generating recipe:", error);
+      // Add error feedback to user
+      Alert.alert("Error", error.message || "Failed to generate recipe");
     } finally {
       setLoading(false);
     }
-  };
-
+  }
   return (
     <View style={{ marginTop: 20 }}>
       <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Recipe Options</Text>
