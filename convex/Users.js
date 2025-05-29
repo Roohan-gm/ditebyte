@@ -93,3 +93,16 @@ export const UpdateUserPref = mutation({
     }
   },
 });
+
+export const UpdateUserProfile = mutation({
+  args: {
+    uid: v.id("users"),
+    picture: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.uid, {
+      picture: args.picture,
+    });
+  },
+});
+

@@ -1,5 +1,5 @@
 import { Image, Text, View } from "react-native";
-import { auth } from "../services/FirebaseConfig"
+import { auth } from "../services/FirebaseConfig";
 import React, { useContext, useEffect } from "react";
 import Button from "../components/shared/Button";
 import { useRouter } from "expo-router";
@@ -12,18 +12,30 @@ import { RightArrow } from "../assets/images/icons/svgIcons";
 export default function Index() {
   const router = useRouter();
   const { user, setUser } = useContext(UserContext);
-  const convex = useConvex;
+  const convex = useConvex();
 
   useEffect(() => {
+    // Create an async function inside useEffect
+    const fetchUserData = async (userInfo) => {
+      try {
+        if (!userInfo?.email) return;
+
+        const userData = await convex.query(api.Users.GetUser, {
+          email: userInfo.email,
+        });
+
+        console.log("User data:", userData);
+        setUser(userData);
+        router.replace(userInfo ? "/(tabs)/Home" : "/auth/SignIn");
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
     const unsubscribe = onAuthStateChanged(auth, async (userInfo) => {
-      console.log(userInfo?.email);
-      const userData = await convex.query(api.Users.GetUser, {
-        email: userInfo?.email,
-      });
-      console.log(userData);
-      setUser(userData);
-      router.replace(userInfo ? "/(tabs)/Home" : "/auth/SignIn");
+      await fetchUserData(userInfo);
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -42,7 +54,7 @@ export default function Index() {
         <View className="absolute bottom-16 w-full px-5">
           <Button
             title="Get Started"
-            onPress={() => router.push('/auth/SignIn')}
+            onPress={() => router.push("/auth/SignIn")}
             icon={<RightArrow />}
           />
         </View>
